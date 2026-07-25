@@ -20,3 +20,4 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 Route::livewire('/admin', 'admin.panel')->name('panel');
+Route::livewire('/admin/users', 'admin.users.user-list')->name('admin.users.list');
