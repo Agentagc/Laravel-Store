@@ -13,82 +13,17 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Hekmatinasser\Verta\Verta;
 
-new #[Layout('admin.master'), Title('لیست دسته بندی ها')]
+new #[Layout('admin.master'), Title('لیست دسته بندی های حذف شده')]
 class extends Component {
-    use WithPagination, WithFileUploads;
-
-
-    #[Validate('required')]
-    public $name;
-
-    #[Validate('nullable')]
-    public $image;
-
-    public $parent_id;
-
-    public $editIndex;
-
-
-    public function createRow(): void
-    {
-        $this->validate();
-
-        if ($this->image) {
-            $image = $this->image->hashName();
-            $this->image->storeAs('images/categories/', $image, 'public');
-        };
-
-
-        Category::query()->create([
-            'name' => $this->name,
-            'slug' => make_slug($this->name),
-            'image' => $this->image ? $image : null,
-            'parent_id' => $this->parent_id
-
-        ]);
-
-        session()->flash('success', 'دسته بندی جدید ایجاد شد');
-        $this->reset();
-    }
-
-    public function editRow($id): void
-    {
-        $this->editIndex = $id;
-        $category = Category::query()->findOrFail($id);
-        $this->name = $category->name;
-        $this->image = $category->image;
-        $this->parent_id = $category->parent_id;
-
-    }
-
-    public function updateRow(): void
-    {
-        $this->validate();
-
-        $category = Category::query()->findOrFail($this->editIndex);
-
-        $imageName = $category->image;
-
-        if ($this->image && is_object($this->image)) {
-            $imageName = $this->image->hashName();
-            $this->image->storeAs('images/categories/', $imageName, 'public');
-        }
-
-        $category->update([
-            'name' => $this->name,
-            'slug' => make_slug($this->name),
-            'image' => $imageName,
-            'parent_id' => $this->parent_id,
-        ]);
-
-        session()->flash('success', 'دسته بندی ویرایش شد');
-        $this->reset();
-    }
+    use WithPagination;
 
     #[Computed()]
     public function categories(): Paginator
     {
-        return Category::query()->with('parentCategory')->paginate(10);
+        return Category::query()
+            ->with('parentCategory')
+            ->onlyTrashed()
+            ->paginate(10);
     }
 
     #[Computed]
@@ -97,86 +32,36 @@ class extends Component {
         return Category::getCategories();
     }
 
-    #[On('destroy-category')]
-    public function destroyRow($category_id): void
+    #[On('hard-destroy-category')]
+    public function hardDestroyRow($category_id): void
     {
-        Category::destroy($category_id);
+        Category::query()->withTrashed()->findOrFail($category_id)->forceDelete();
+    }
+
+    public function restoreRow($category_id)
+    {
+        Category::query()->withTrashed()->findOrFail($category_id)->restore();
     }
 
     public function confirmDelete($id): void
     {
-        $this->dispatch('delete-category', category_id: $id);
+        $this->dispatch('hard-delete-category', category_id: $id);
     }
 };
 ?>
 
-<div class="max-w-4xl mx-auto px-6 pt-6 space-y-6">
-    <div class="panel">
-
-        @include('admin.layouts.success')
-
-        <div class="flex items-center justify-between mb-5 pt-2">
-            <h5 class="text-lg font-semibold dark:text-white-light">ایجاد دسته بندی</h5>
-        </div>
-        <div class="mb-5">
-            <form class="space-y-5">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label for="name">نام دسته بندی</label>
-                        <input wire:model="name" id="name" type="text" class="form-input">
-                        @error('name')
-                        <p class="text-danger mt-1">{{$message}}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label for="email">دسته بندی پدر</label>
-                        <div>
-                            <select wire:model="parent_id" id="ctnSelect1" class="form-select text-white-dark"
-                                    required="">
-                                <option>دسته بندی اصلی</option>
-
-                                @foreach($this->parentCategories as $key=>$value)
-                                    <option value="{{$key}}">{{$value}}</option>
-                                @endforeach
-
-                            </select>
-                        </div>
-                        @error('parent_id')
-                        <p class="text-danger mt-1">{{$message}}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label for="phone">تصویر</label>
-                        <div>
-                            <input wire:model="image" id="ctnFile" type="file"
-                                   class="p-0 rtl:file-ml-5 form-input file:border-0 file:bg-primary/90 file:py-2 file:px-4 file:font-semibold file:text-white file:hover:bg-primary ltr:file:mr-5"
-                            >
-                        </div>
-                        @error('image')
-                        <p class="text-danger mt-1">{{$message}}</p>
-                        @enderror
-                    </div>
-                </div>
-                @if($editIndex)
-                    <button wire:click.prevent="updateRow" class="btn btn-primary !mt-6">ویرایش</button>
-                @else
-                    <button wire:click.prevent="createRow" class="btn btn-success !mt-6">ثبت</button>
-                @endif
-            </form>
-        </div>
-    </div>
-
+<div class="max-w-4xl mx-auto px-6 pt-6 space-y-6" >
     <div class="panel">
         <div class="flex items-center justify-between mb-5">
             <h5 class="text-lg font-semibold dark:text-white-light">لیست دسته بندی ها</h5>
-            <a href="{{ route("admin.trashed_categories.list") }}"
+            <a href="{{ route("admin.categories.list") }}"
                class="flex items-center gap-2 btn btn-outline-danger btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20.5001 6H3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     <path d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
                           stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
-                دسته بندی های حذف شده
+                دسته بندی ها
             </a>
         </div>
         <div class="mb-5">
@@ -188,7 +73,7 @@ class extends Component {
                         <th>تصویر</th>
                         <th>نام دسته بندی</th>
                         <th>دسته بندی پدر</th>
-                        <th>تاریخ ایجاد</th>
+                        <th>تاریخ حذف</th>
                         <th class="text-center">عملیات</th>
                     </tr>
                     </thead>
@@ -244,27 +129,21 @@ class extends Component {
                             </td>
 
                             <td class="whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ Verta::instance($category->created_at)->formatJalaliDate()  }}
+                                {{ Verta::instance($category->deleted_at)->formatJalaliDate()  }}
                             </td>
 
                             <td class="text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button wire:click="editRow({{ $category->id }})" type="button" x-tooltip="ویرایش"
+                                    <button wire:click="restoreRow({{$category->id}})" type="button" x-tooltip="بازگردانی"
                                             class="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                             xmlns="http://www.w3.org/2000/svg" class="text-blue-500">
-                                            <path
-                                                d="M15.2869 3.15178L14.3601 4.07866L5.83882 12.5999L5.83881 12.5999C5.26166 13.1771 4.97308 13.4656 4.7249 13.7838C4.43213 14.1592 4.18114 14.5653 3.97634 14.995C3.80273 15.3593 3.67368 15.7465 3.41556 16.5208L2.32181 19.8021L2.05445 20.6042C1.92743 20.9852 2.0266 21.4053 2.31063 21.6894C2.59466 21.9734 3.01478 22.0726 3.39584 21.9456L4.19792 21.6782L7.47918 20.5844L7.47919 20.5844C8.25353 20.3263 8.6407 20.1973 9.00498 20.0237C9.43469 19.8189 9.84082 19.5679 10.2162 19.2751C10.5344 19.0269 10.8229 18.7383 11.4001 18.1612L11.4001 18.1612L19.9213 9.63993L20.8482 8.71306C22.3839 7.17735 22.3839 4.68748 20.8482 3.15178C19.3125 1.61607 16.8226 1.61607 15.2869 3.15178Z"
-                                                stroke="currentColor" stroke-width="1.5"/>
-                                            <path opacity="0.5"
-                                                  d="M14.36 4.07812C14.36 4.07812 14.4759 6.04774 16.2138 7.78564C17.9517 9.52354 19.9213 9.6394 19.9213 9.6394M4.19789 21.6777L2.32178 19.8015"
-                                                  stroke="currentColor" stroke-width="1.5"/>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                                         </svg>
                                     </button>
 
                                     <button
                                         wire:click="confirmDelete({{ $category->id }})"
-                                        type="button" x-tooltip="حذف"
+                                        type="button" x-tooltip="حذف دائم"
                                         class="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                                              xmlns="http://www.w3.org/2000/svg" class="text-rose-500">
@@ -293,7 +172,7 @@ class extends Component {
 </div>
 @script
 <script !src="">
-    Livewire.on('delete-category', (event) => {
+    Livewire.on('hard-delete-category', (event) => {
         Swal.fire({
             title: 'حذف دسته بندی',
             text: 'آیا مطمئن هستید؟ این عملیات قابل بازگشت است.',
@@ -309,7 +188,7 @@ class extends Component {
             buttonsStyling: false,
         }).then((result) => {
             if (result.isConfirmed) {
-                Livewire.dispatch('destroy-category', { category_id: event.category_id });
+                Livewire.dispatch('hard-destroy-category', { category_id: event.category_id });
                 Swal.fire({
                     title: 'حذف شد!',
                     text: 'دسته بندی با موفقیت حذف شد.',
