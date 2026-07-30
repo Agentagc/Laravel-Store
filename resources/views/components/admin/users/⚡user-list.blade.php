@@ -28,6 +28,8 @@ class extends Component {
     #[Validate('required|min:8')]
     public $password;
 
+    public $search = '';
+
     public $editIndex;
 
     public function createRow(): void
@@ -80,7 +82,9 @@ class extends Component {
     #[Computed()]
     public function users(): Paginator
     {
-        return User::query()->paginate(10);
+        return User::query()
+            ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
+            ->paginate(10);
     }
 };
 ?>
@@ -88,6 +92,7 @@ class extends Component {
     <div class="panel">
 
         @include('admin.layouts.success')
+        @include('layouts.waiting')
 
         <div class="flex items-center justify-between mb-5 pt-2">
             <h5 class="text-lg font-semibold dark:text-white-light">ایجاد کاربر</h5>
@@ -136,6 +141,22 @@ class extends Component {
     <div class="panel">
         <div class="flex items-center justify-between mb-5">
             <h5 class="text-lg font-semibold dark:text-white-light">لیست کاربران</h5>
+        </div>
+        <div class="mb-5">
+            <div class="relative">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <input
+                    type="text"
+                    wire:model.live.debounce.400ms="search"
+                    placeholder="جستجو در نام کاربران ..."
+                    class="w-full pr-10 pl-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary dark:focus:border-primary transition"
+                />
+            </div>
         </div>
         <div class="mb-5">
             <div class="table-responsive">
@@ -209,26 +230,6 @@ class extends Component {
                                             stroke="currentColor" stroke-width="1.5"></path>
                                         <path opacity="0.5"
                                               d="M14.36 4.07812C14.36 4.07812 14.4759 6.04774 16.2138 7.78564C17.9517 9.52354 19.9213 9.6394 19.9213 9.6394M4.19789 21.6777L2.32178 19.8015"
-                                              stroke="currentColor" stroke-width="1.5"></path>
-                                    </svg>
-                                </button>
-                                <button type="button" x-tooltip="Delete">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                         xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-500">
-                                        <path d="M20.5001 6H3.5" stroke="currentColor" stroke-width="1.5"
-                                              stroke-linecap="round"></path>
-                                        <path
-                                            d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
-                                            stroke="currentColor" stroke-width="1.5"
-                                            stroke-linecap="round"></path>
-                                        <path opacity="0.5" d="M9.5 11L10 16" stroke="currentColor"
-                                              stroke-width="1.5"
-                                              stroke-linecap="round"></path>
-                                        <path opacity="0.5" d="M14.5 11L14 16" stroke="currentColor"
-                                              stroke-width="1.5"
-                                              stroke-linecap="round"></path>
-                                        <path opacity="0.5"
-                                              d="M6.5 6C6.55588 6 6.58382 6 6.60915 5.99936C7.43259 5.97849 8.15902 5.45491 8.43922 4.68032C8.44784 4.65649 8.45667 4.62999 8.47434 4.57697L8.57143 4.28571C8.65431 4.03708 8.69575 3.91276 8.75071 3.8072C8.97001 3.38607 9.37574 3.09364 9.84461 3.01877C9.96213 3 10.0932 3 10.3553 3H13.6447C13.9068 3 14.0379 3 14.1554 3.01877C14.6243 3.09364 15.03 3.38607 15.2493 3.8072C15.3043 3.91276 15.3457 4.03708 15.4286 4.28571L15.5257 4.57697C15.5433 4.62992 15.5522 4.65651 15.5608 4.68032C15.841 5.45491 16.5674 5.97849 17.3909 5.99936C17.4162 6 17.4441 6 17.5 6"
                                               stroke="currentColor" stroke-width="1.5"></path>
                                     </svg>
                                 </button>

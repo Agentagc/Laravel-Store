@@ -26,6 +26,8 @@ class extends Component {
 
     public $parent_id;
 
+    public $search = '';
+
     public $editIndex;
 
 
@@ -88,7 +90,10 @@ class extends Component {
     #[Computed()]
     public function categories(): Paginator
     {
-        return Category::query()->with('parentCategory')->paginate(10);
+        return Category::query()
+            ->with('parentCategory')
+            ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
+            ->paginate(10);
     }
 
     #[Computed]
@@ -107,6 +112,7 @@ class extends Component {
     {
         $this->dispatch('delete-category', category_id: $id);
     }
+
 };
 ?>
 
@@ -114,6 +120,7 @@ class extends Component {
     <div class="panel">
 
         @include('admin.layouts.success')
+        @include('layouts.waiting')
 
         <div class="flex items-center justify-between mb-5 pt-2">
             <h5 class="text-lg font-semibold dark:text-white-light">ایجاد دسته بندی</h5>
@@ -179,6 +186,24 @@ class extends Component {
                 دسته بندی های حذف شده
             </a>
         </div>
+
+        <div class="mb-5">
+            <div class="relative">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <input
+                    type="text"
+                    wire:model.live.debounce.400ms="search"
+                    placeholder="جستجو در دسته بندی ها ..."
+                    class="w-full pr-10 pl-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary dark:focus:border-primary transition"
+                />
+            </div>
+        </div>
+
         <div class="mb-5">
             <div class="table-responsive">
                 <table class="table-hover">

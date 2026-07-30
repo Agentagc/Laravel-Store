@@ -52,6 +52,7 @@ class extends Component {
 
 <div class="max-w-4xl mx-auto px-6 pt-6 space-y-6" >
     <div class="panel">
+        @include('layouts.waiting')
         <div class="flex items-center justify-between mb-5">
             <h5 class="text-lg font-semibold dark:text-white-light">لیست دسته بندی ها</h5>
             <a href="{{ route("admin.categories.list") }}"
