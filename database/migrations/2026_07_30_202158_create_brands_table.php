@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\CategoryStatus;
+use App\Enums\BrandStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,13 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
+        Schema::create('brands', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
             $table->string('slug')->unique();
             $table->string('image')->nullable();
-            $table->string('status')->default(CategoryStatus::Active->value);
-            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->string('status')->default(BrandStatus::Active->value);
             $table->softDeletes();
             $table->timestamps();
         });
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('brands');
     }
 };

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Category;
+use App\Models\Brand;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Contracts\Pagination\Paginator;
@@ -13,18 +13,16 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Hekmatinasser\Verta\Verta;
 
-new #[Layout('admin.master'), Title('لیست دسته بندی ها')]
+new #[Layout('admin.master'), Title('لیست برند ها')]
 class extends Component {
     use WithPagination, WithFileUploads;
 
 
-    #[Validate('required|unique:categories,name')]
+    #[Validate('required|unique:brands,name')]
     public $name;
 
     #[Validate('nullable')]
     public $image;
-
-    public $parent_id;
 
     public $search = '';
 
@@ -37,80 +35,68 @@ class extends Component {
 
         if ($this->image) {
             $image = $this->image->hashName();
-            $this->image->storeAs('images/categories/', $image, 'public');
+            $this->image->storeAs('images/brands/', $image, 'public');
         };
 
 
-        Category::query()->create([
+        Brand::query()->create([
             'name' => $this->name,
             'slug' => make_slug($this->name),
             'image' => $this->image ? $image : null,
-            'parent_id' => $this->parent_id
-
         ]);
 
-        session()->flash('success', 'دسته بندی جدید ایجاد شد');
+        session()->flash('success', ' برند جدید ایجاد شد');
         $this->reset();
     }
 
     public function editRow($id): void
     {
         $this->editIndex = $id;
-        $category = Category::query()->findOrFail($id);
-        $this->name = $category->name;
-        $this->image = $category->image;
-        $this->parent_id = $category->parent_id;
-
+        $brand = Brand::query()->findOrFail($id);
+        $this->name = $brand->name;
+        $this->image = $brand->image;
     }
 
     public function updateRow(): void
     {
         $this->validate();
 
-        $category = Category::query()->findOrFail($this->editIndex);
+        $brand = Brand::query()->findOrFail($this->editIndex);
 
-        $imageName = $category->image;
+        $imageName = $brand->image;
 
         if ($this->image && is_object($this->image)) {
             $imageName = $this->image->hashName();
-            $this->image->storeAs('images/categories/', $imageName, 'public');
+            $this->image->storeAs('images/brands/', $imageName, 'public');
         }
 
-        $category->update([
+        $brand->update([
             'name' => $this->name,
             'slug' => make_slug($this->name),
             'image' => $imageName,
-            'parent_id' => $this->parent_id,
         ]);
 
-        session()->flash('success', 'دسته بندی ویرایش شد');
+        session()->flash('success', 'برند ویرایش شد');
         $this->reset();
     }
 
     #[Computed()]
-    public function categories(): Paginator
+    public function brands(): Paginator
     {
-        return Category::query()
-            ->with('parentCategory')
+        return Brand::query()
             ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
             ->paginate(10);
     }
 
-    #[Computed]
-    public function parentCategories()
+    #[On('destroy-brand')]
+    public function destroyRow($brand_id): void
     {
-        return Category::getCategories();
-    }
-
-    #[On('destroy-category')]
-    public function destroyRow($category_id): void
-    {
-        Category::destroy($category_id);
+        Brand::destroy($brand_id);
     }
 
     public function confirmDelete($id): void
     {
-        $this->dispatch('delete-category', category_id: $id);
+        $this->dispatch('delete-brand', brand_id: $id);
     }
 
 };
@@ -123,32 +109,15 @@ class extends Component {
         @include('layouts.waiting')
 
         <div class="flex items-center justify-between mb-5 pt-2">
-            <h5 class="text-lg font-semibold dark:text-white-light">ایجاد دسته بندی</h5>
+            <h5 class="text-lg font-semibold dark:text-white-light">ایجاد برند</h5>
         </div>
         <div class="mb-5">
             <form class="space-y-5">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label for="name">نام دسته بندی</label>
+                        <label for="name">نام برند</label>
                         <input wire:model="name" id="name" type="text" class="form-input">
                         @error('name')
-                        <p class="text-danger mt-1">{{$message}}</p>
-                        @enderror
-                    </div>
-                    <div>
-                        <label for="email">دسته بندی پدر</label>
-                        <div>
-                            <select wire:model="parent_id" id="ctnSelect1" class="form-select text-white-dark"
-                                    required="">
-                                <option>دسته بندی اصلی</option>
-
-                                @foreach($this->parentCategories as $key=>$value)
-                                    <option value="{{$key}}">{{$value}}</option>
-                                @endforeach
-
-                            </select>
-                        </div>
-                        @error('parent_id')
                         <p class="text-danger mt-1">{{$message}}</p>
                         @enderror
                     </div>
@@ -175,22 +144,24 @@ class extends Component {
 
     <div class="panel">
         <div class="flex items-center justify-between mb-5">
-            <h5 class="text-lg font-semibold dark:text-white-light">لیست دسته بندی ها</h5>
-            <a href="{{ route("admin.trashed_categories.list") }}"
+            <h5 class="text-lg font-semibold dark:text-white-light">لیست برند ها</h5>
+            <a href="{{ route("admin.brands.trashed_brand.list") }}"
                class="flex items-center gap-2 btn btn-outline-danger btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20.5001 6H3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
-                          stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path
+                        d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
-                دسته بندی های حذف شده
+                برند های حذف شده
             </a>
         </div>
 
         <div class="mb-5">
             <div class="relative">
                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" viewBox="0 0 24 24" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
                         <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/>
                         <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
@@ -198,7 +169,7 @@ class extends Component {
                 <input
                     type="text"
                     wire:model.live.debounce.400ms="search"
-                    placeholder="جستجو در دسته بندی ها ..."
+                    placeholder="جستجو در برند ها ..."
                     class="w-full pr-10 pl-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary dark:focus:border-primary transition"
                 />
             </div>
@@ -211,26 +182,25 @@ class extends Component {
                     <tr>
                         <th>ردیف</th>
                         <th>تصویر</th>
-                        <th>نام دسته بندی</th>
-                        <th>دسته بندی پدر</th>
+                        <th>نام برند</th>
                         <th>تاریخ ایجاد</th>
                         <th class="text-center">عملیات</th>
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach($this->categories as $index => $category)
+                    @foreach($this->brands as $index => $brand)
                         <tr>
                             <td class="w-10">
-                                {{ $this->categories->firstItem() + $index }}
+                                {{ $this->brands->firstItem() + $index }}
                             </td>
 
                             {{-- بخش تصویر --}}
                             <td class="w-20">
-                                @if($category->image)
+                                @if($brand->image)
                                     <div class="flex items-center justify-center">
                                         <img
-                                            src="{{ url('images/categories/' . $category->image) }}"
-                                            alt="{{ $category->name }}"
+                                            src="{{ url('images/brands/' . $brand->image) }}"
+                                            alt="{{ $brand->name }}"
                                             class="w-12 h-12 rounded-lg object-cover ring-2 ring-gray-200 dark:ring-gray-700"
                                             onerror="this.src='{{ url('images/placeholder.png') }}'"
                                         >
@@ -255,26 +225,16 @@ class extends Component {
                             </td>
 
                             <td class="whitespace-nowrap font-medium">
-                                {{ $category->name }}
-                            </td>
-
-                            <td class="whitespace-nowrap">
-                                @if($category->parentCategory)
-                                    <span class="badge bg-primary/20 text-primary rounded-full px-3 py-1 text-xs">
-                                    {{ $category->parentCategory->name }}
-                                </span>
-                                @else
-                                    <span class="text-gray-400 text-sm">—</span>
-                                @endif
+                                {{ $brand->name }}
                             </td>
 
                             <td class="whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ Verta::instance($category->created_at)->formatJalaliDate()  }}
+                                {{ Verta::instance($brand->created_at)->formatJalaliDate()  }}
                             </td>
 
                             <td class="text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <button wire:click="editRow({{ $category->id }})" type="button" x-tooltip="ویرایش"
+                                    <button wire:click="editRow({{ $brand->id }})" type="button" x-tooltip="ویرایش"
                                             class="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                                              xmlns="http://www.w3.org/2000/svg" class="text-blue-500">
@@ -288,7 +248,7 @@ class extends Component {
                                     </button>
 
                                     <button
-                                        wire:click="confirmDelete({{ $category->id }})"
+                                        wire:click="confirmDelete({{ $brand->id }})"
                                         type="button" x-tooltip="حذف"
                                         class="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -314,14 +274,14 @@ class extends Component {
             </div>
         </div>
     </div>
-    {{ $this->categories->links('admin.layouts.admin_pagination') }}
+    {{ $this->brands->links('admin.layouts.admin_pagination') }}
 </div>
 @script
 <script !src="">
-    Livewire.on('delete-category', (event) => {
+    Livewire.on('delete-brand', (event) => {
         Swal.fire({
-            title: 'حذف دسته بندی',
-            text: 'آیا مطمئن هستید؟ این عملیات قابل بازگشت است.',
+            title: 'حذف برند',
+            text: 'آیا مطمئن هستید؟',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'بله، حذف کن',
@@ -334,10 +294,10 @@ class extends Component {
             buttonsStyling: false,
         }).then((result) => {
             if (result.isConfirmed) {
-                Livewire.dispatch('destroy-category', { category_id: event.category_id });
+                Livewire.dispatch('destroy-brand', {brand_id: event.brand_id});
                 Swal.fire({
                     title: 'حذف شد!',
-                    text: 'دسته بندی با موفقیت حذف شد.',
+                    text: 'برند با موفقیت حذف شد.',
                     icon: 'success',
                     customClass: {
                         confirmButton: 'btn btn-primary',
