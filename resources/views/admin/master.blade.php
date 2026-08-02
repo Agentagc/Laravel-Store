@@ -13,6 +13,7 @@
     @vite('resources/css/app.css')
 
     <link defer rel="stylesheet" type="text/css" media="screen" href="{{ asset("panel/css/animate.css") }}" />
+    <wireui:scripts />
     <script src="{{ asset("panel/js/perfect-scrollbar.min.js") }}"></script>
     <script defer src="{{ asset("panel/js/popper.min.js") }}"></script>
     <script defer src="{{ asset("panel/js/tippy-bundle.umd.min.js") }}"></script>
@@ -24,6 +25,8 @@
     class="relative overflow-x-hidden text-sm antialiased font-normal font-vazir font-nunito"
     :class="  [ $store.app.sidebar ? 'toggle-sidebar' : '', $store.app.theme, $store.app.menu, $store.app.layout,$store.app.rtlClass]"
 >
+@livewireScripts
+@fluxScripts
 <!-- sidebar menu overlay -->
 <div x-cloak class="fixed inset-0 z-50 bg-[black]/60 lg:hidden" :class="{'hidden' : !$store.app.sidebar}" @click="$store.app.toggleSidebar()"></div>
 
