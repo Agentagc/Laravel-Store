@@ -17,3 +17,6 @@ Route::livewire('/trashed_brands', 'admin.brands.trashed-brand-list')->name('adm
 
 // --- colors ---//
 Route::livewire('/colors', 'admin.colors.color-list')->name('admin.colors.list');
+
+// --- guaranties ---//
+Route::livewire('/guaranties', 'admin.guaranties.guaranty-list')->name('admin.guaranties.list');
