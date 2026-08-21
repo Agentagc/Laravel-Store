@@ -51,15 +51,25 @@ class extends Component {
     <div class="panel">
         <div class="flex items-center justify-between mb-5">
             <h5 class="text-lg font-semibold dark:text-white-light">لیست محصول ها</h5>
-            <a href="#"
-               class="flex items-center gap-2 btn btn-outline-danger btn-sm">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20.5001 6H3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
-                          stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                محصول های حذف شده
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('admin.create.product') }}"
+                   class="flex items-center gap-2 btn btn-primary btn-sm">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M5 12H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    ساخت محصول
+                </a>
+                <a href="{{ route('admin.create.product') }}"
+                   class="flex items-center gap-2 btn btn-outline-danger btn-sm">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.5001 6H3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
+                              stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    محصول های حذف شده
+                </a>
+            </div>
         </div>
 
         <div class="mb-5">

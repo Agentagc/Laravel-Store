@@ -125,7 +125,7 @@ class extends Component {
                 <input wire:model="e_name" id="e_name" type="text" placeholder="e.g. Samsung Galaxy A55" class="form-input" dir="ltr">
                 @error('e_name')<p class="text-danger text-xs mt-1">{{$message}}</p>@enderror
             </div>
-            <div>
+            <div wire:ignore>
                 <label for="category_id">دسته‌بندی <span class="text-danger text-xs">*</span></label>
                 <select wire:model="category_id" id="category-select" >
                     <option>انتخاب کنید</option>
@@ -135,7 +135,7 @@ class extends Component {
                 </select>
                 @error('category_id')<p class="text-danger text-xs mt-1">{{$message}}</p>@enderror
             </div>
-            <div>
+            <div wire:ignore>
                 <label for="brand_id">برند<span class="text-danger text-xs">*</span></label>
                 <div>
                     <select wire:model="brand_id" id="brand-select">
@@ -189,7 +189,7 @@ class extends Component {
     </div>
 
     {{-- بخش ۴: توضیحات --}}
-    <div class="panel">
+    <div class="panel" wire:ignore>
         <h6 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
             توضیحات محصول <span class="text-danger text-xs">*</span>
         </h6>

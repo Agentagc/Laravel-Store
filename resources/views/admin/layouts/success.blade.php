@@ -1,7 +1,7 @@
 @if(session()->has('success'))
-    <div class="flex items-center rounded bg-success-light p-3.5 text-success dark:bg-success-dark-light">
+    <div id="flash-message" class="flex items-center rounded bg-success-light p-3.5 text-success dark:bg-success-dark-light">
         <span class="ltr:pr-2 rtl:pl-2"><strong class="ltr:mr-1 rtl:ml-1">موفق!</strong>{{ session('success') }}</span>
-        <button type="button" class="hover:opacity-80 ltr:ml-auto rtl:mr-auto">
+        <button type="button" class="hover:opacity-80 ltr:ml-auto rtl:mr-auto" onclick="closeFlashMessage()">
             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
                  class="w-5 h-5">
@@ -10,4 +10,9 @@
             </svg>
         </button>
     </div>
+    <script>
+        function closeFlashMessage() {
+            document.getElementById('flash-message').style.display = 'none';
+        }
+    </script>
 @endif
