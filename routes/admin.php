@@ -25,3 +25,6 @@ Route::livewire('/guaranties', 'admin.guaranties.guaranty-list')->name('admin.gu
 Route::livewire('/products', 'admin.products.product-list')->name('admin.products.list');
 Route::livewire('/create_product', 'admin.products.create-product')->name('admin.create.product');
 Route::livewire('/edit_product/{product}', 'admin.products.edit-product')->name('admin.edit.product');
+Route::livewire('/product_prices/{product}', 'admin.products.product-prices')->name('admin.product.prices');
+Route::livewire('/create_product_price/{product}', 'admin.products.⚡create-product-price')->name('admin.create.product.price');
+

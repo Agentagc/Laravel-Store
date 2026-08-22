@@ -11,35 +11,44 @@ use Illuminate\Support\Facades\Hash;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Hekmatinasser\Verta\Verta;
+use App\Models\ProductPrice;
+use App\Enums\ProductStatus;
 
-new #[Layout('admin.master'), Title('لیست محصولات')]
+
+new #[Layout('admin.master'), Title('لیست تنوع قیمت محصولات')]
 class extends Component {
     use WithPagination;
 
 
     public $search = '';
 
+    public $product;
+
+    public function mount(Product $product): void
+    {
+        $this->product = $product;
+    }
 
 
     #[Computed()]
-    public function products(): Paginator
+    public function productPrices(): Paginator
     {
-        return Product::query()
-            ->with('category', 'brand')
+        return ProductPrice::query()
+            ->where('product_id', $this->product->id)
             ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
             ->paginate(10);
     }
 
 
-    #[On('destroy-product')]
-    public function destroyRow($product_id): void
+    #[On('destroy-product-price')]
+    public function destroyRow($product_price_id): void
     {
-        Product::destroy($product_id);
+        ProductPrice::destroy($product_price_id);
     }
 
     public function confirmDelete($id): void
     {
-        $this->dispatch('delete-product', product_id: $id);
+        $this->dispatch('delete-product-price', product_price_id: $id);
     }
 
 };
@@ -52,13 +61,13 @@ class extends Component {
         <div class="flex items-center justify-between mb-5">
             <h5 class="text-lg font-semibold dark:text-white-light">لیست محصول ها</h5>
             <div class="flex items-center gap-2">
-                <a href="{{ route('admin.create.product') }}"
+                <a href="{{ route('admin.create.product.price', ['product' => $product->id]) }}"
                    class="flex items-center gap-2 btn btn-primary btn-sm">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 5V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                         <path d="M5 12H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
-                    ساخت محصول
+                    ساخت تنوع محصول
                 </a>
                 <a href="{{ route('admin.create.product') }}"
                    class="flex items-center gap-2 btn btn-outline-danger btn-sm">
@@ -67,7 +76,7 @@ class extends Component {
                         <path d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5"
                               stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
-                    محصول های حذف شده
+                    تنوع قیمت محصول های حذف شده
                 </a>
             </div>
         </div>
@@ -99,87 +108,60 @@ class extends Component {
                     <thead>
                     <tr>
                         <th>ردیف</th>
-                        <th>تصویر</th>
-                        <th>نام محصول</th>
                         <th>قیمت</th>
-                        <th>دسته بندی</th>
-                        <th>برند</th>
-                        <th>تنوع قیمت</th>
+                        <th>تخفیف</th>
+                        <th>تعداد</th>
+                        <th>رنگ</th>
+                        <th>گارانتی</th>
+                        <th>وضعیت</th>
                         <th>تاریخ ایجاد</th>
                         <th class="text-center">عملیات</th>
                     </tr>
                     </thead>
                     <tbody>
-                    @foreach($this->products as $index => $product)
+                    @foreach($this->productPrices as $index => $productPrice)
                         <tr>
                             <td class="w-10">
-                                {{ $this->products->firstItem() + $index }}
+                                {{ $this->productPrices->firstItem() + $index }}
                             </td>
 
-                            {{-- بخش تصویر --}}
-                            <td class="w-20">
-                                @if($product->image)
-                                    <div class="flex items-center justify-center">
-                                        <img
-                                            src="{{ url('images/products/' . $product->image) }}"
-                                            alt="{{ $product->name }}"
-                                            class="w-12 h-12 rounded-lg object-cover ring-2 ring-gray-200 dark:ring-gray-700"
-                                            onerror="this.src='{{ url('images/placeholder.png') }}'"
-                                        >
-                                    </div>
-                                @else
-                                    <div
-                                        class="flex items-center justify-center w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-400">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                             xmlns="http://www.w3.org/2000/svg">
-                                            <path opacity="0.5"
-                                                  d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z"
-                                                  stroke="currentColor" stroke-width="1.5"/>
-                                            <path
-                                                d="M9 10C9 10.5523 8.55228 11 8 11C7.44772 11 7 10.5523 7 10C7 9.44772 7.44772 9 8 9C8.55228 9 9 9.44772 9 10Z"
-                                                fill="currentColor"/>
-                                            <path
-                                                d="M2 13L5.10556 10.2147C5.85739 9.55048 7.01616 9.59703 7.71213 10.3186L11.7994 14.7196C12.3882 15.3416 13.3559 15.4267 14.0461 14.9151L14.2935 14.7285C15.1078 14.1286 16.2319 14.1918 16.9765 14.8803L20 17.6667"
-                                                stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                        </svg>
-                                    </div>
+                            <td class="whitespace-nowrap font-medium">
+                                {{ $productPrice->price }}
+                            </td>
+
+                            <td class="whitespace-nowrap font-medium">
+                                {{ $productPrice->discount }}
+                            </td>
+
+                            <td class="whitespace-nowrap font-medium">
+                                {{ $productPrice->stock }}
+                            </td>
+
+                            <td class="whitespace-nowrap font-medium">
+                                {{ $productPrice->color->name }}
+                            </td>
+
+                            <td class="whitespace-nowrap font-medium">
+                                {{ $productPrice->guaranty->name }}
+                            </td>
+
+                            <td class="whitespace-nowrap font-medium">
+                                @if($productPrice->status == ProductStatus::Active->value)
+                                    <span class="badge bg-success">فعال</span>
+                                @elseif($productPrice->status == ProductStatus::Inactive->value)
+                                    <span class="badge bg-danger">غیر فعال</span>
+                                @elseif($productPrice->status == ProductStatus::Banned->value)
+                                    <span class="badge bg-warning">بن شده</span>
                                 @endif
                             </td>
 
-                            <td class="whitespace-nowrap font-medium">
-                                {{ $product->name }}
-                            </td>
-
-                            <td class="whitespace-nowrap font-medium">
-                                {{ $product->price }}
-                            </td>
-
-                            <td class="whitespace-nowrap font-medium">
-                                {{ $product->category->name }}
-                            </td>
-
-                            <td class="whitespace-nowrap font-medium">
-                                {{ $product->brand->name }}
-                            </td>
-
-                            <td class="whitespace-nowrap font-medium flex items-center justify-center">
-                                <button class="btn btn-primary btn-sm m-2">
-                                    <a href="{{ route('admin.product.prices', ['product' => $product->id]) }}">
-                                        <svg width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-dollar-sign">
-                                            <line x1="12" y1="1" x2="12" y2="23"></line>
-                                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                                        </svg>
-                                    </a>
-                                </button>
-                            </td>
-
                             <td class="whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ Verta::instance($product->created_at)->formatJalaliDate()  }}
+                                {{ Verta::instance($productPrice->created_at)->formatJalaliDate()  }}
                             </td>
 
                             <td class="text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ route("admin.edit.product", ['product' => $product->id])  }}" type="button" x-tooltip="ویرایش"
+                                    <a href="#" type="button" x-tooltip="ویرایش"
                                             class="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                                              xmlns="http://www.w3.org/2000/svg" class="text-blue-500">
@@ -193,7 +175,7 @@ class extends Component {
                                     </a>
 
                                     <button
-                                        wire:click="confirmDelete({{ $product->id }})"
+                                        wire:click="confirmDelete({{ $productPrice->id }})"
                                         type="button" x-tooltip="حذف"
                                         class="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 transition">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -219,13 +201,13 @@ class extends Component {
             </div>
         </div>
     </div>
-    {{ $this->products->links('admin.layouts.admin_pagination') }}
+    {{ $this->productPrices->links('admin.layouts.admin_pagination') }}
 </div>
 @script
 <script !src="">
-    Livewire.on('delete-product', (event) => {
+    Livewire.on('delete-product-price', (event) => {
         Swal.fire({
-            title: 'حذف محصول',
+            title: 'حذف تنوع قیمت',
             text: 'آیا مطمئن هستید؟ این عملیات قابل بازگشت است.',
             icon: 'warning',
             showCancelButton: true,
@@ -239,10 +221,10 @@ class extends Component {
             buttonsStyling: false,
         }).then((result) => {
             if (result.isConfirmed) {
-                Livewire.dispatch('destroy-product', { product_id: event.product_id });
+                Livewire.dispatch('destroy-product-price', { product_price_id: event.product_price_id });
                 Swal.fire({
                     title: 'حذف شد!',
-                    text: 'محصول با موفقیت حذف شد.',
+                    text: 'تنوع قیمت با موفقیت حذف شد.',
                     icon: 'success',
                     customClass: {
                         confirmButton: 'btn btn-primary',
